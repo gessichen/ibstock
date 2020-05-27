@@ -1,19 +1,21 @@
-from IBJts.source.pythonclient.ibapi.client import EClient
-from IBJts.source.pythonclient.ibapi.wrapper import EWrapper
-from IBJts.source.pythonclient.ibapi.contract import Contract
-from IBJts.source.pythonclient.ibapi.order import Order
+from ibapi.client import EClient
+from ibapi.wrapper import EWrapper
+from ibapi.contract import Contract
+from ibapi.order import Order
 
 from apscheduler.schedulers.background import BackgroundScheduler
 import requests
 import datetime
+import time
 import json
+import math
 
 class StockApp(EWrapper, EClient):
 
     def __init__(self):
         EClient.__init__(self, self)
         scheduler = BackgroundScheduler()
-        scheduler.add_job(checkStocks, 'interval', seconds=3)
+        scheduler.add_job(self.checkStocks, 'interval', seconds=5)
         scheduler.start()
 
     def error(self, reqId, errorCode, errorString):
@@ -23,7 +25,7 @@ class StockApp(EWrapper, EClient):
         now = datetime.datetime.now()
         suburl = "immediate"
 
-        if now > datetime.datetime(now.year, now.month, now.day, 14, 34, 50):
+        if now > datetime.datetime(now.year, now.month, now.day, 1, 34, 50):
             suburl = "scheduled"
 
         headers = {
@@ -35,6 +37,8 @@ class StockApp(EWrapper, EClient):
         try:
             response = requests.get(url, params=params, headers=headers)
             stock = response.json().get("stock")
+
+            print(str(stock))
 
             if stock != "":
 
@@ -76,18 +80,19 @@ class StockApp(EWrapper, EClient):
         contract.secType = 'STK'
         contract.currency = 'JPY'
         contract.exchange = 'TSEJ'
+        contract.symbol=str(stock)
         
         order = Order()
         order.action = 'BUY'
         order.totalQuantity = 500
         order.orderType = 'MKT'
 
-        self.placeOrder(1, contract, order)
+        self.placeOrder(math.ceil(time.time()), contract, order)
 
 
-def main():
-    #app = StockApp()
-    #app.connect("127.0.0.1", 7497, 1)
+#def main():
+#    print ("running!")
+app = StockApp()
+app.connect("127.0.0.1", 7497, 1)
 
-    #app.run()
-    print("run")
+app.run()
