@@ -25,7 +25,7 @@ class StockApp(EWrapper, EClient):
         now = datetime.datetime.now()
         suburl = "immediate"
 
-        if now > datetime.datetime(now.year, now.month, now.day, 1, 34, 50):
+        if now > datetime.datetime(now.year, now.month, now.day, 15, 34, 50):
             suburl = "scheduled"
 
         headers = {
@@ -93,6 +93,6 @@ class StockApp(EWrapper, EClient):
 #def main():
 #    print ("running!")
 app = StockApp()
-app.connect("127.0.0.1", 7497, 1)
+app.connect("127.0.0.1", 7496, 1)
 
 app.run()
