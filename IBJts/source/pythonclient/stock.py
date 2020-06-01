@@ -18,8 +18,24 @@ class StockApp(EWrapper, EClient):
         scheduler.add_job(self.checkStocks, 'interval', seconds=5)
         scheduler.start()
 
-    def error(self, reqId, errorCode, errorString):
-        print("Error: ", reqId, errorCode, " ", errorString)
+    def error(self, orderId, errorCode, errorString):
+        print("Stock error: ", orderId, errorCode, " ", errorString)
+        
+        try:
+            headers = {
+                "content-type": "application/json",
+            }
+            
+            updateUrl = "http://localhost:5012/order/ib?order_id=" + orderId
+            updateData = {
+                "status": "failed"
+            }
+
+            response = requests.put(updateUrl, params={}, data=json.dumps(updateData), headers=headers)
+
+        except requests.ConnectionError:
+            print("cannot request server")
+        
 
     def checkStocks(self):
         now = datetime.datetime.now()
@@ -42,13 +58,14 @@ class StockApp(EWrapper, EClient):
 
             if stock != "":
 
-                self.buyStock(stock)
+                orderId = self.buyStock(stock)
                 orderData = {
                     "trade": response.json().get("trade"),
                     "stock": response.json().get("stock"),
-                    "status": "success",
+                    "status": "initialized",
                     "company": response.json().get("company"),
-                    "amount": 500
+                    "amount": 500,
+                    "order_id": orderId
                 }
                 orderUrl = "http://localhost:5012/order?trader=ib"
                 resp1 = requests.post(orderUrl, params=params, data=json.dumps(orderData), headers=headers)
@@ -74,7 +91,10 @@ class StockApp(EWrapper, EClient):
               lastFillPrice, "ClientId:", clientId, "WhyHeld:",
               whyHeld, "MktCapPrice:", mktCapPrice)
 
+        
     def buyStock(self, stock):
+
+        orderId = math.ceil(time.time())
 
         contract = Contract()
         contract.secType = 'STK'
@@ -87,7 +107,9 @@ class StockApp(EWrapper, EClient):
         order.totalQuantity = 500
         order.orderType = 'MKT'
 
-        self.placeOrder(math.ceil(time.time()), contract, order)
+        self.placeOrder(orderId, contract, order)
+
+        return orderId
 
 
 #def main():
