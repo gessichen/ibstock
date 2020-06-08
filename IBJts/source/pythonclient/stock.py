@@ -19,14 +19,14 @@ class StockApp(EWrapper, EClient):
         scheduler.start()
 
     def error(self, orderId, errorCode, errorString):
-        print("Stock error: ", orderId, errorCode, " ", errorString)
+        print("Stock error: ", str(orderId), errorCode, " ", errorString)
         
         try:
             headers = {
                 "content-type": "application/json",
             }
             
-            updateUrl = "http://localhost:5012/order/ib?order_id=" + orderId
+            updateUrl = "http://localhost:5012/order/ib?order_id=" + str(orderId)
             updateData = {
                 "status": "failed"
             }
@@ -65,7 +65,7 @@ class StockApp(EWrapper, EClient):
                     "status": "initialized",
                     "company": response.json().get("company"),
                     "amount": 500,
-                    "order_id": orderId
+                    "order_id": str(orderId)
                 }
                 orderUrl = "http://localhost:5012/order?trader=ib"
                 resp1 = requests.post(orderUrl, params=params, data=json.dumps(orderData), headers=headers)
